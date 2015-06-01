@@ -1,0 +1,16 @@
+Options -Indexes +FollowSymLinks
+Order allow,deny
+Allow from all
+
+php_flag output_buffering on
+
+RewriteEngine on
+RewriteRule Boutique Vue/Boutique.php
+RewriteRule Classement Vue/Classement.php
+RewriteRule Event Vue/Event.php
+RewriteRule Faction Vue/Faction.php
+RewriteRule Nous-rejoindre Vue/Nous-rejoindre.php
+RewriteRule Social Vue/Social.php
+RewriteRule Vote Vue/Vote.php
+RewriteRule Accueil index.php
+RewriteRule styles Vue/styles.css

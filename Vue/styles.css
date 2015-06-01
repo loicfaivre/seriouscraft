@@ -1,0 +1,59 @@
+html { 
+  margin:0;
+  padding:0;
+  background: url('../Images/FondEcran.png') no-repeat center fixed; 
+  -webkit-background-size: cover; /* pour anciens Chrome et Safari */
+  background-size: cover; /* version standardisée */
+}
+
+body {
+	background-color: transparent;
+	font-size: 16px;
+}
+
+.body {
+	margin: 0 auto;
+	width: 72%;
+	clear: both;
+}
+
+#myNav {
+	margin-top: 2%;
+	margin-bottom: 5%;
+}
+
+/*
+.Content {
+	overflow: hidden;
+}
+*/
+
+.centerContent {
+	margin-right: auto;
+	margin-bottom: 5%;
+	width: 70%;
+	float: left;	
+}
+
+.rightContent {
+    margin-left: auto;
+    margin-bottom: 5%; 
+	width: 25%;	
+}
+
+.panel-body:after {
+	clear: none;
+}
+
+footer {
+	margin-top: 1%;
+	clear: both;
+}
+
+#myFooter {
+	margin-top: 15%;
+}
+
+.search {
+	float: inherit !important; /* force à le placer en inherit */
+}
