@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Client :  127.0.0.1
--- Généré le :  Lun 25 Mai 2015 à 20:09
+-- Généré le :  Lun 01 Juin 2015 à 20:48
 -- Version du serveur :  5.6.17
 -- Version de PHP :  5.5.12
 
@@ -170,7 +170,7 @@ CREATE TABLE IF NOT EXISTS `evenement` (
   `pseudo_J` varchar(20) NOT NULL,
   PRIMARY KEY (`id_Evenement`),
   KEY `FK_Evenement_pseudo_J` (`pseudo_J`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=12 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=22 ;
 
 --
 -- Contenu de la table `evenement`
@@ -187,7 +187,33 @@ INSERT INTO `evenement` (`id_Evenement`, `nom_Evenement`, `dateCreation_Evenemen
 (8, 'Event7', '2015-05-06', '2015-05-06', '2015-05-06', 'Des choses incroyables vont se produire.', 'themonheal'),
 (9, 'Event8', '2015-05-06', '2015-05-06', '2015-05-06', 'Des choses incroyables vont se produire.', 'themonheal'),
 (10, 'Event9', '2015-05-06', '2015-05-06', '2015-05-06', 'Des choses incroyables vont se produire.', 'themonheal'),
-(11, 'Event10', '2015-05-06', '2015-05-06', '2015-05-06', 'Des choses incroyables vont se produire.', 'themonheal');
+(11, 'Event10', '2015-05-06', '2015-05-06', '2015-05-06', 'Des choses incroyables vont se produire.', 'themonheal'),
+(12, 'EventIncr', '2015-05-05', '2015-05-05', '2015-05-05', 'Je suis un évènement fabuleux !', 'themonheal'),
+(13, 'Guerre Inter-Faction', '2015-05-06', '2015-06-24', '2015-09-09', 'Je crois que la fin est proche ...', 'themonheal'),
+(21, 'Premier Evenement', '2015-05-31', '2015-05-31', '2015-05-31', 'Je suis le premier évènement !', 'themonheal');
+
+--
+-- Déclencheurs `evenement`
+--
+DROP TRIGGER IF EXISTS `MultipleTriggersEvent`;
+DELIMITER //
+CREATE TRIGGER `MultipleTriggersEvent` BEFORE INSERT ON `evenement`
+ FOR EACH ROW begin
+ if(new.nom_Evenement IN (Select nom_Evenement From evenement)) then
+  SIGNAL SQLSTATE '45000' set MESSAGE_TEXT = 'Cet evenement existe deja';
+ end if;
+ if(new.dateCreation_Evenement > new.dateDeb_Evenement) then
+  SIGNAL SQLSTATE '45000' set MESSAGE_TEXT = 'Erreur, la date de creation est superieure a la date de debut';
+ end if;
+ if(new.dateCreation_Evenement > new.dateFin_Evenement) then
+  SIGNAL SQLSTATE '45000' set MESSAGE_TEXT = 'Erreur, la date de creation est superieure a la date de fin';
+ end if;
+ if(new.dateDeb_Evenement > new.dateFin_Evenement) then
+  SIGNAL SQLSTATE '45000' set MESSAGE_TEXT = 'Erreur, la date de debut est superieure a la date de fin';
+ end if;
+end
+//
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -216,6 +242,20 @@ INSERT INTO `faction` (`nom_Faction`, `description_Faction`) VALUES
 ('Shuffledrive', 'Curabitur at ipsum ac tellus semper interdum. Mauris ullamcorper purus sit amet nulla. Quisque arcu libero, rutrum ac, lobortis vel, dapibus at, diam.'),
 ('Skivee', 'Maecenas ut massa quis augue luctus tincidunt. Nulla mollis molestie lorem. Quisque ut erat.'),
 ('Topicblab', 'Quisque porta volutpat erat. Quisque erat eros, viverra eget, congue eget, semper rutrum, nulla. Nunc purus.');
+
+--
+-- Déclencheurs `faction`
+--
+DROP TRIGGER IF EXISTS `MultipleTriggersFaction`;
+DELIMITER //
+CREATE TRIGGER `MultipleTriggersFaction` BEFORE INSERT ON `faction`
+ FOR EACH ROW begin
+ if(new.nom_Faction IN (Select nom_Faction From faction)) then
+  SIGNAL SQLSTATE '45000' set MESSAGE_TEXT = 'Cette faction existe deja';
+ end if;
+end
+//
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -256,6 +296,23 @@ INSERT INTO `grade` (`id_Grade`, `nom_Grade`, `prix_Grade`, `description_Grade`)
 (18, 'integer', 3, 'Phasellus in felis. Donec semper sapien a libero. Nam dui.'),
 (19, 'libero', 7, 'Etiam vel augue. Vestibulum rutrum rutrum neque. Aenean auctor gravida sem.'),
 (20, 'porttitor', 3, 'Pellentesque at nulla. Suspendisse potenti. Cras in purus eu magna vulputate luctus.');
+
+--
+-- Déclencheurs `grade`
+--
+DROP TRIGGER IF EXISTS `MultipleTriggersGrade`;
+DELIMITER //
+CREATE TRIGGER `MultipleTriggersGrade` BEFORE INSERT ON `grade`
+ FOR EACH ROW begin
+ if(new.nom_Grade IN (Select nom_Grade From grade)) then
+  SIGNAL SQLSTATE '45000' set MESSAGE_TEXT = 'Ce grade existe deja';
+ end if;
+ if(new.prix_Grade < 0) then
+  SIGNAL SQLSTATE '45000' set MESSAGE_TEXT = 'Erreur, vous ne pouvez pas mettre un prix negatif';
+ end if;
+end
+//
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -298,8 +355,7 @@ CREATE TABLE IF NOT EXISTS `joueur` (
   `seriousflouz` int(11) DEFAULT NULL,
   `nb_Vote` int(11) DEFAULT NULL,
   `nb_PointBoutique` int(11) DEFAULT NULL,
-  `token` varchar(25) DEFAULT NULL,
-  `nom_Faction` varchar(25) NOT NULL,
+  `nom_Faction` varchar(25) DEFAULT NULL,
   PRIMARY KEY (`pseudo_J`),
   KEY `FK_Joueur_nom_Faction` (`nom_Faction`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -308,18 +364,39 @@ CREATE TABLE IF NOT EXISTS `joueur` (
 -- Contenu de la table `joueur`
 --
 
-INSERT INTO `joueur` (`pseudo_J`, `mdp_J`, `seriousflouz`, `nb_Vote`, `nb_PointBoutique`, `token`, `nom_Faction`) VALUES
-('Joueur1', '12345', 10, 1, 0, 'sefvsdf4sf54fd46f', 'Jabbersphere'),
-('Joueur10', '1234', 1, 2, 3, 'vsdvsdvfefgbtrehergg54', 'Lazz'),
-('Joueur2', '1234', 1000, 1000, 1000, 'vsdvsdvfefgbtrehergg54', 'Lazz'),
-('Joueur3', '1234', 5, 5, 2, 'vsdvsdvfefgbtrehergg54', 'Lazz'),
-('Joueur4', '1234', 9, 0, 1, 'vsdvsdvfefgbtrehergg54', 'Lazz'),
-('Joueur5', '1234', 0, 0, 0, 'vsdvsdvfefgbtrehergg54', 'Lazz'),
-('Joueur6', '1234', 4, 4, 4, 'vsdvsdvfefgbtrehergg54', 'Lazz'),
-('Joueur7', '1234', 6, 7, 5, 'vsdvsdvfefgbtrehergg54', 'Lazz'),
-('Joueur8', '1234', 1, 2, 8, 'vsdvsdvfefgbtrehergg54', 'Lazz'),
-('Joueur9', '1234', 1, 2, 2, 'vsdvsdvfefgbtrehergg54', 'Lazz'),
-('themonheal', '1234', 10000000, 10000000, 10000000, 'vfdvkjsdlvjsv5v6zd8sdfpog', 'Blogspan');
+INSERT INTO `joueur` (`pseudo_J`, `mdp_J`, `seriousflouz`, `nb_Vote`, `nb_PointBoutique`, `nom_Faction`) VALUES
+('Joueur1', '12345', 10, 1, 0, 'Jabbersphere'),
+('Joueur10', '1234', 1, 2, 3, 'Lazz'),
+('Joueur2', '1234', 1000, 1000, 1000, 'Lazz'),
+('Joueur3', '1234', 5, 5, 2, 'Lazz'),
+('Joueur4', '1234', 9, 0, 1, 'Lazz'),
+('Joueur5', '1234', 0, 0, 0, 'Lazz'),
+('Joueur6', '1234', 4, 4, 4, 'Lazz'),
+('Joueur7', '1234', 6, 7, 5, 'Lazz'),
+('Joueur8', '1234', 1, 2, 8, 'Lazz'),
+('Joueur9', '1234', 1, 2, 2, 'Lazz'),
+('NoFaction', '1234', 1, 1, 1, NULL),
+('themonheal', '1234', 10000000, 10000033, 10000000, 'Blogspan');
+
+--
+-- Déclencheurs `joueur`
+--
+DROP TRIGGER IF EXISTS `MultipleTriggersPlayer`;
+DELIMITER //
+CREATE TRIGGER `MultipleTriggersPlayer` BEFORE INSERT ON `joueur`
+ FOR EACH ROW begin
+ if(new.pseudo_J IN (Select pseudo_J From joueur)) then
+  SIGNAL SQLSTATE '45000' set MESSAGE_TEXT = 'Ce joueur existe deja';
+ end if;
+ if(new.nb_Vote < 0) then
+  SIGNAL SQLSTATE '45000' set MESSAGE_TEXT = 'Erreur, vous ne pouvez pas mettre un nombre de vote negatif';
+ end if;
+ if(new.nb_PointBoutique < 0) then
+  SIGNAL SQLSTATE '45000' set MESSAGE_TEXT = 'Erreur, vous ne pouvez pas mettre un nombre de Point boutique negatif';
+ end if;
+end
+//
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -360,6 +437,23 @@ INSERT INTO `objet` (`id_Objet`, `nom_Objet`, `prix_Objet`, `description_Objet`)
 (18, 'donec', 6, 'Curabitur gravida nisi at nibh. In hac habitasse platea dictumst. Aliquam augue quam, sollicitudin vitae, consectetuer eget, rutrum at, lorem.'),
 (19, 'libero', 1, 'Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Vivamus vestibulum sagittis sapien. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.'),
 (20, 'morbi', 7, 'Duis consequat dui nec nisi volutpat eleifend. Donec ut dolor. Morbi vel lectus in quam fringilla rhoncus.');
+
+--
+-- Déclencheurs `objet`
+--
+DROP TRIGGER IF EXISTS `MultipleTriggersObject`;
+DELIMITER //
+CREATE TRIGGER `MultipleTriggersObject` BEFORE INSERT ON `objet`
+ FOR EACH ROW begin
+ if(new.nom_Objet IN (Select nom_Objet From objet)) then
+  SIGNAL SQLSTATE '45000' set MESSAGE_TEXT = 'Cet objet existe deja';
+ end if;
+ if(new.prix_Objet < 0) then
+  SIGNAL SQLSTATE '45000' set MESSAGE_TEXT = 'Erreur, vous ne pouvez pas mettre un prix negatif';
+ end if;
+end
+//
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -445,7 +539,7 @@ CREATE TABLE IF NOT EXISTS `serveur` (
   `nom_Serveur` varchar(25) DEFAULT NULL,
   `description_Serveur` longtext,
   PRIMARY KEY (`id_Serveur`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=21 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4 ;
 
 --
 -- Contenu de la table `serveur`
@@ -455,6 +549,20 @@ INSERT INTO `serveur` (`id_Serveur`, `nom_Serveur`, `description_Serveur`) VALUE
 (1, 'nulla', 'Nullam porttitor lacus at turpis. Donec posuere metus vitae ipsum. Aliquam non mauris.'),
 (2, 'id', 'Sed ante. Vivamus tortor. Duis mattis egestas metus.'),
 (3, 'curae', 'Morbi porttitor lorem id ligula. Suspendisse ornare consequat lectus. In est risus, auctor sed, tristique in, tempus sit amet, sem.');
+
+--
+-- Déclencheurs `serveur`
+--
+DROP TRIGGER IF EXISTS `MultipleTriggersServer`;
+DELIMITER //
+CREATE TRIGGER `MultipleTriggersServer` BEFORE INSERT ON `serveur`
+ FOR EACH ROW begin
+ if(new.nom_Serveur IN (Select nom_Serveur From serveur)) then
+  SIGNAL SQLSTATE '45000' set MESSAGE_TEXT = 'Ce serveur existe deja';
+ end if;
+end
+//
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -485,15 +593,15 @@ INSERT INTO `voter` (`id_Evenement`, `pseudo_J`) VALUES
 -- Contraintes pour la table `acheter`
 --
 ALTER TABLE `acheter`
-  ADD CONSTRAINT `FK_acheter_pseudo_J` FOREIGN KEY (`pseudo_J`) REFERENCES `joueur` (`pseudo_J`),
-  ADD CONSTRAINT `FK_acheter_id_Objet` FOREIGN KEY (`id_Objet`) REFERENCES `objet` (`id_Objet`);
+  ADD CONSTRAINT `FK_acheter_id_Objet` FOREIGN KEY (`id_Objet`) REFERENCES `objet` (`id_Objet`),
+  ADD CONSTRAINT `FK_acheter_pseudo_J` FOREIGN KEY (`pseudo_J`) REFERENCES `joueur` (`pseudo_J`);
 
 --
 -- Contraintes pour la table `allie`
 --
 ALTER TABLE `allie`
-  ADD CONSTRAINT `FK_allie_nom_Faction_1` FOREIGN KEY (`nom_Faction_1`) REFERENCES `faction` (`nom_Faction`),
-  ADD CONSTRAINT `FK_allie_nom_Faction` FOREIGN KEY (`nom_Faction`) REFERENCES `faction` (`nom_Faction`);
+  ADD CONSTRAINT `FK_allie_nom_Faction` FOREIGN KEY (`nom_Faction`) REFERENCES `faction` (`nom_Faction`),
+  ADD CONSTRAINT `FK_allie_nom_Faction_1` FOREIGN KEY (`nom_Faction_1`) REFERENCES `faction` (`nom_Faction`);
 
 --
 -- Contraintes pour la table `appartenir`
@@ -513,8 +621,8 @@ ALTER TABLE `concourir`
 -- Contraintes pour la table `ennemi`
 --
 ALTER TABLE `ennemi`
-  ADD CONSTRAINT `FK_ennemi_nom_Faction_1` FOREIGN KEY (`nom_Faction_1`) REFERENCES `faction` (`nom_Faction`),
-  ADD CONSTRAINT `FK_ennemi_nom_Faction` FOREIGN KEY (`nom_Faction`) REFERENCES `faction` (`nom_Faction`);
+  ADD CONSTRAINT `FK_ennemi_nom_Faction` FOREIGN KEY (`nom_Faction`) REFERENCES `faction` (`nom_Faction`),
+  ADD CONSTRAINT `FK_ennemi_nom_Faction_1` FOREIGN KEY (`nom_Faction_1`) REFERENCES `faction` (`nom_Faction`);
 
 --
 -- Contraintes pour la table `evenement`
@@ -539,8 +647,8 @@ ALTER TABLE `joueur`
 -- Contraintes pour la table `participe`
 --
 ALTER TABLE `participe`
-  ADD CONSTRAINT `FK_participe_pseudo_J` FOREIGN KEY (`pseudo_J`) REFERENCES `joueur` (`pseudo_J`),
-  ADD CONSTRAINT `FK_participe_id_Evenement` FOREIGN KEY (`id_Evenement`) REFERENCES `evenement` (`id_Evenement`);
+  ADD CONSTRAINT `FK_participe_id_Evenement` FOREIGN KEY (`id_Evenement`) REFERENCES `evenement` (`id_Evenement`),
+  ADD CONSTRAINT `FK_participe_pseudo_J` FOREIGN KEY (`pseudo_J`) REFERENCES `joueur` (`pseudo_J`);
 
 --
 -- Contraintes pour la table `promouvoir`
@@ -553,16 +661,16 @@ ALTER TABLE `promouvoir`
 -- Contraintes pour la table `recompenser`
 --
 ALTER TABLE `recompenser`
-  ADD CONSTRAINT `FK_recompenser_pseudo_J` FOREIGN KEY (`pseudo_J`) REFERENCES `joueur` (`pseudo_J`),
   ADD CONSTRAINT `FK_recompenser_id_Evenement` FOREIGN KEY (`id_Evenement`) REFERENCES `evenement` (`id_Evenement`),
-  ADD CONSTRAINT `FK_recompenser_id_Objet` FOREIGN KEY (`id_Objet`) REFERENCES `objet` (`id_Objet`);
+  ADD CONSTRAINT `FK_recompenser_id_Objet` FOREIGN KEY (`id_Objet`) REFERENCES `objet` (`id_Objet`),
+  ADD CONSTRAINT `FK_recompenser_pseudo_J` FOREIGN KEY (`pseudo_J`) REFERENCES `joueur` (`pseudo_J`);
 
 --
 -- Contraintes pour la table `voter`
 --
 ALTER TABLE `voter`
-  ADD CONSTRAINT `FK_voter_pseudo_J` FOREIGN KEY (`pseudo_J`) REFERENCES `joueur` (`pseudo_J`),
-  ADD CONSTRAINT `FK_voter_id_Evenement` FOREIGN KEY (`id_Evenement`) REFERENCES `evenement` (`id_Evenement`);
+  ADD CONSTRAINT `FK_voter_id_Evenement` FOREIGN KEY (`id_Evenement`) REFERENCES `evenement` (`id_Evenement`),
+  ADD CONSTRAINT `FK_voter_pseudo_J` FOREIGN KEY (`pseudo_J`) REFERENCES `joueur` (`pseudo_J`);
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
